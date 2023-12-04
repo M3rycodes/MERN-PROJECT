@@ -10,15 +10,16 @@ const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: authMiddleware,
-})
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-// Apply Express middleware to handle GraphQL requests
-server.applyMiddleware({ app });
 
+// if we're in production, serve client/build as static assets
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+}
+
+app.use(routes);
 // Connect to the database
 db.once('open', () => {
   // Start the Express server
