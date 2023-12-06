@@ -10,9 +10,22 @@ const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(express.urlencoded({ extended: true }));
+//create new Apollo server and pass in our schema data
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: authMiddleware
+})
+
+
+const startApolloServer = async () => {
+  await server.start();
+
+
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
+app.use('/graphql', expressMiddleware(server));
 
 // if we're in production, serve client/build as static assets
 if (process.env.NODE_ENV === 'production') {
@@ -20,10 +33,17 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(routes);
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
 // Connect to the database
 db.once('open', () => {
   // Start the Express server
   app.listen(PORT, () => {
-    console.log(`🚀 Server started on port ${PORT}`);
+    console.log(`🌍 Now listening on localhost:${PORT}`);
+    console.log(`🚀 GraphQL at http://localhost:${PORT}/graphql`);
   });
 });
